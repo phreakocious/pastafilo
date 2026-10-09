@@ -1,14 +1,14 @@
-# strudel-claude
+# pastafilo
 
-![strudel-claude](public/strudel-claude.png)
+A [Strudel](https://strudel.cc) REPL that a coding agent can play. It is a minimal, full-screen live-coding page with a small REST API. An agent (Claude Code, Codex, or anything that can run `curl`) writes Strudel patterns and pushes them to the page you are listening to.
 
-An experiment to play and learn [Strudel](https://strudel.cc) with Claude Code.
+*Pasta filo* is phyllo dough: strudel dough, stretched paper-thin and layered.
 
-A minimal, full-screen live coding environment for making music. **Built for AI** - exposes REST APIs so Claude can compose and control music programmatically.
+pastafilo began as a fork of [strudel-claude](https://github.com/renatoworks/strudel-claude) by Renato Costa.
 
 ## What is Strudel?
 
-Strudel is a JavaScript port of Tidal Cycles for algorithmic music composition. Write code, make music, in real-time.
+Strudel is a JavaScript port of Tidal Cycles for algorithmic music composition. Write code, make music, in real time.
 
 ```javascript
 // Drums
@@ -18,11 +18,7 @@ $: s("bd*4, [~ cp]*2, hh*8").bank("RolandTR909")
 $: note("<c2 eb2 f2 g2>").s("sawtooth").lpf(400)
 ```
 
-## Prerequisites
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
-
-## Quick Start
+## Quick start
 
 **1. Start the server**
 ```bash
@@ -30,42 +26,45 @@ npm install
 npm run dev
 ```
 
-**2. Open Claude Code in the project folder**
-```bash
-claude
+**2. Open http://localhost:3000 and click the page once.** Browsers keep audio suspended until a click or key press. Until then, pushed code shows in the editor but nothing sounds.
+
+**3. Open your agent in the project folder** and ask:
+```
+"Teach me Strudel"          → tutorial
+"Play me a techno set"      → dj-set
+"Compose a synthwave track" → compose
+"Let's make music together" → interactive
 ```
 
-**3. Ask for any skill**
-```
-"Teach me Strudel"          → /tutorial
-"Play me a techno set"      → /dj-set
-"Compose a synthwave track" → /compose
-"Let's make music together" → /interactive
-```
+## Agents
 
-See [Skills for Claude Code](#skills-for-claude-code) for more examples.
+- **Instructions** are in [AGENTS.md](AGENTS.md). `CLAUDE.md` imports it and maps its two generic phrases to Claude Code's tools.
+- **Skills** are in `.agents/skills/`, in the SKILL.md format. `.claude/skills` is a symlink to the same folder. On Windows, git checks out a symlink as a plain file unless symlinks are on: turn on Developer Mode and run `git config --global core.symlinks true` before you clone, or Claude Code will not find the skills.
+- Tested with Claude Code. Other agents that read `AGENTS.md` and `.agents/skills/` should work, but are untested.
 
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Shortcut | Action |
 |----------|--------|
 | `Cmd+Enter` | Play / evaluate code |
 | `Cmd+.` | Stop |
 
-## Recording Audio
+## Recording audio
 
-Capture your Strudel output to WAV:
+By hand:
 
-1. **Start playback** - Hit play or `Cmd+Enter`
-2. **Click the red record button** - It pulses and shows duration
-3. **Click again to stop** - A preview toast appears
+1. **Start playback**: hit play or `Cmd+Enter`
+2. **Click the red record button**: it pulses and shows the duration
+3. **Click again to stop**: a preview toast appears
 4. **Listen, then Download or Discard**
 
-Recording is independent from playback - stop recording anytime without stopping the music.
+Recording is independent of playback: stop recording at any time without stopping the music.
 
-## API for Agents
+From a script: `scripts/record.sh <seconds> [base_url]` stops, plays from the top, records in the open page, and prints the path of the WAV it saves in `output/`. `base_url` must point at a server started from this checkout, because the script waits for the file in its own `output/`.
 
-The REST API allows AI agents to read and write Strudel code, enabling autonomous music composition. **Real-time sync** via Server-Sent Events means the browser updates instantly when you push code or trigger playback.
+## API
+
+The page follows the server over Server-Sent Events, so it updates as soon as code is pushed or playback changes.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -74,12 +73,11 @@ The REST API allows AI agents to read and write Strudel code, enabling autonomou
 | `/api/play` | `POST` | Start playback |
 | `/api/stop` | `POST` | Stop playback |
 | `/api/status` | `GET` | Get current state |
+| `/api/record` | `POST` | Record `{ "seconds": n }` (up to 900) in the open page; 409 when no page is connected |
+| `/api/recording` | `POST` | The page uploads a finished WAV here; it is saved to `output/` |
 | `/api/events` | `GET` | SSE stream for real-time updates |
 
-### Example: AI Composing Music
-
 ```bash
-# Push new code and play
 curl -X POST http://localhost:3000/api/code \
   -H "Content-Type: application/json" \
   -d '{"code": "$: s(\"bd*4, cp*2\").bank(\"RolandTR909\")"}'
@@ -87,9 +85,29 @@ curl -X POST http://localhost:3000/api/code \
 curl -X POST http://localhost:3000/api/play
 ```
 
-## Project Structure
+`/api/code` parses the body as JSON: a backslash sequence JSON does not define (`\s`, `\x`) returns a 500.
+
+## Analyzing reference tracks
+
+`scripts/analyze.py` measures tracks you want to learn from: bar grid, drum accent maps, swing, spectral balance, structure, and the bass line per 16th. The numbers give an agent something concrete to build a pattern from. It does not detect tempo: pass `--bpm` (default 130). Its docstring lists what it reads wrong.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt
+.venv/bin/python scripts/analyze.py --selftest
+.venv/bin/python scripts/analyze.py --bpm 128 references/*.aiff   # references/ is ignored by git
+```
+
+It needs ffmpeg on the `PATH`. On Intel Macs, use Python 3.10-3.13: librosa depends on llvmlite, and its last x86_64 macOS wheels cover only those versions.
+
+## Project structure
 
 ```
+.agents/skills/             # Agent skills (SKILL.md); .claude/skills links here
+scripts/
+├── record.sh               # Record the open page to output/
+├── analyze.py              # Measure reference tracks
+└── requirements.txt
 src/
 ├── app/
 │   ├── api/                # REST API for agents
@@ -98,6 +116,8 @@ src/
 │   │   ├── play/           # POST play
 │   │   ├── stop/           # POST stop
 │   │   ├── status/         # GET status
+│   │   ├── record/         # POST record (sent to the page)
+│   │   ├── recording/      # POST the page's WAV
 │   │   └── state.ts        # Shared state + event emitter
 │   ├── layout.tsx          # Root layout
 │   ├── page.tsx            # Home page
@@ -109,30 +129,21 @@ src/
 │   └── use-audio-recorder.ts # Audio recording to WAV
 └── lib/
     ├── constants.ts        # Shared constants
-    ├── utils.ts            # Utilities
     └── wav-encoder.ts      # Pure JS WAV encoder
+tracks/                     # Example compositions
 ```
 
-## Tech Stack
+## Voice feedback (macOS only)
 
-- Next.js
-- Tailwind CSS
-- Strudel REPL
+The skills can narrate with the macOS `say` command, when you turn voice on.
 
-## Voice Feedback (macOS only)
-
-The AI agent uses the `say` command for voice feedback. This only works on macOS.
-
-By default, macOS uses basic voices like Daniel or Samantha, but you can enable much better **Siri voices** that sound way more natural:
-
-### Enable Siri Voices
+By default, macOS uses basic voices like Daniel or Samantha. The Siri voices sound much more natural:
 
 1. Open **System Settings** → **Accessibility** → **Spoken Content**
-   *(or press `Cmd+Space` and search "Spoken Content")*
 2. Click the **ⓘ** (info icon) next to **System Voice**
 3. In the voice dropdown, search for **"Siri"**
 4. Download a Siri voice you like
-5. **Set it as your System Voice** - this way all `say` commands use it automatically
+5. **Set it as your System Voice**, so every `say` command uses it
 
 Test it in Terminal:
 
@@ -140,23 +151,20 @@ Test it in Terminal:
 say "Let's make some music"
 ```
 
-## Skills for Claude Code
+## Skills
 
-This REPL includes skills that teach Claude how to make music. The `/strudel` and `/api` skills are loaded automatically - Claude already knows the syntax and how to control the app.
+`strudel` (the syntax reference) and `api` (REPL control) load before any music is played. In Claude Code, every skill is also a slash command (`/tutorial`).
 
-**Try these:**
-
-### `/tutorial` - Learn Strudel & Music Theory
+### tutorial: learn Strudel and music theory
 
 ```
 "Teach me Strudel from the beginning"
 "Explain how filters work"
 "Show me how to make chord progressions"
-"Teach me music theory basics"
 "What's the difference between major and minor scales?"
 ```
 
-### `/dj-set` - Live DJ Sets
+### dj-set: live DJ sets
 
 ```
 "Play me a 5-minute live techno set"
@@ -165,7 +173,7 @@ This REPL includes skills that teach Claude how to make music. The `/strudel` an
 "Play an indefinite acid house set until I stop you"
 ```
 
-### `/compose` - Full Track Compositions
+### compose: full track compositions
 
 ```
 "Compose a 3-minute synthwave track"
@@ -173,7 +181,7 @@ This REPL includes skills that teach Claude how to make music. The `/strudel` an
 "Make a lo-fi hip hop beat"
 ```
 
-### `/interactive` - Guided Music Creation
+### interactive: guided music creation
 
 ```
 "Let's make music together"
@@ -181,22 +189,16 @@ This REPL includes skills that teach Claude how to make music. The `/strudel` an
 "Guide me through making a song"
 ```
 
-### Other Skills
+### visuals
 
-- `/visuals` - Add visualizations (pianoroll, spiral, oscilloscope)
-- `/strudel` - Syntax reference (loaded automatically)
-- `/api` - REPL control (loaded automatically)
+Adds pianoroll, spiral and oscilloscope displays to any pattern.
 
-## Learn More
+## Learn more
 
-- [Strudel Docs](https://strudel.cc/learn)
-- [Strudel GitHub](https://github.com/tidalcycles/strudel)
+- [Strudel docs](https://strudel.cc/learn)
+- [Strudel on Codeberg](https://codeberg.org/uzu/strudel)
 - [Tidal Cycles](https://tidalcycles.org)
 
 ## License
 
-MIT - Free to use, copy, modify, and distribute.
-
----
-
-Made in [Blueberry](https://meetblueberry.com) 🫐
+MIT. See [LICENSE](LICENSE).
