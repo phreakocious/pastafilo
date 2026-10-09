@@ -111,7 +111,7 @@ The sound:
 The arsenal:
 - 6 vocal layers (oohs, aahs, choir, stutter, deep)
 - Full UK garage kit with shakers
-- 3 levels of supersaw (stab → big → MASSIVE)
+- 3 levels of detuned-saw stabs (stab → big → MASSIVE)
 - Halo pads floating above it all
 ```
 
@@ -249,7 +249,7 @@ let perc = s("~ ~ cb ~").bank("RolandTR909").gain(0.2).delay(0.3).delaytime(0.37
 
 // Emotional chords
 let chords = chord("<Cm Cm Ab Bb>").voicing().s("gm_pad_warm").gain(0.3).attack(0.3).release(1.5).room(0.6).size(0.8).lpf(1200)
-let chordsBright = chord("<Cm Cm Ab Bb>").voicing().s("supersaw").gain(0.25).attack(0.1).release(0.8).room(0.5).lpf(sine.range(800, 3000).slow(16))
+let chordsBright = chord("<Cm Cm Ab Bb>").voicing().s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.25).attack(0.1).release(0.8).room(0.5).lpf(sine.range(800, 3000).slow(16))
 
 // Hypnotic arpeggio
 let arp = n("0 4 7 11 14 11 7 4").scale("C3:minor").s("triangle").gain(0.35).lpf(sine.range(600, 2500).slow(8)).room(0.5).delay(0.25).delaytime(0.1875).delayfeedback(0.5)
@@ -257,7 +257,7 @@ let arpHigh = n("<0 3 7 10> <7 10 14 17>/2").scale("C4:minor").s("sine").gain(0.
 
 // Melody
 let melody = n("<[~ 7 ~ 4] [~ 11 ~ 7] [~ 14 11 ~] [10 ~ 7 ~]>").scale("C4:minor").s("gm_pad_choir").gain(0.25).attack(0.2).release(1).room(0.7).delay(0.2)
-let lead = n("<[14 ~ 11 ~] [~ 10 ~ 7] [11 ~ ~ 14] [~ 7 10 ~]>").scale("C4:minor").s("supersaw").gain(0.35).lpf(2000).room(0.5).attack(0.05).release(0.5).vib(4).vibmod(0.15)
+let lead = n("<[14 ~ 11 ~] [~ 10 ~ 7] [11 ~ ~ 14] [~ 7 10 ~]>").scale("C4:minor").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.35).lpf(2000).room(0.5).attack(0.05).release(0.5).vib(4).vibmod(0.15)
 
 // Atmosphere
 let pad = chord("<Cm7 Abmaj7>").voicing().s("gm_pad_sweep").gain(0.15).attack(2).release(4).room(0.9).size(0.95).lpf(800)
@@ -336,9 +336,9 @@ let fullKit = stack(kick, snare, hat, oh, perc, rim)
 let maxKit = stack(kick, snare, hat, oh, perc, rim, shaker)
 
 // === SUPERSAWS ===
-let stab = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("supersaw").gain(0.42).struct("~ x ~ ~ ~ x ~ x").room(0.4).lpf(3200)
-let stabBig = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("supersaw").gain(0.58).room(0.5).lpf(5000)
-let stabMassive = note("<[g3,b3,d4,g4] [g3,b3,d4,g4] [c4,e4,g4,c5] [d4,a4,d5]>").s("supersaw").gain(0.62).room(0.55).lpf(6000)
+let stab = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.42).struct("~ x ~ ~ ~ x ~ x").room(0.4).lpf(3200)
+let stabBig = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.58).room(0.5).lpf(5000)
+let stabMassive = note("<[g3,b3,d4,g4] [g3,b3,d4,g4] [c4,e4,g4,c5] [d4,a4,d5]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.62).room(0.55).lpf(6000)
 let chords = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("gm_pad_warm").gain(0.28).room(0.6).attack(0.2).release(1.2)
 
 // === ARPS ===
@@ -513,7 +513,7 @@ let arpFast = n("0 3 7 10 12 10 7 3").scale("C3:minor").fast(2).s("triangle").lp
 // === PADS - dark atmosphere ===
 let pad = note("<[c3,eb3,g3] [c3,eb3,g3] [ab2,c3,eb3] [bb2,d3,f3]>").s("sawtooth").lpf(800).attack(0.5).release(2).gain(0.25).room(0.8).size(0.9)
 let padDark = note("[c2,g2,c3]").s("sawtooth").lpf(400).attack(1).release(3).gain(0.2).room(0.9).size(0.95)
-let padMassive = note("<[c3,eb3,g3,c4] [c3,eb3,g3,c4] [ab2,c3,eb3,ab3] [bb2,d3,f3,bb3]>").s("supersaw").lpf(sine.range(1000,4000).slow(16)).attack(0.3).release(1.5).gain(0.4).room(0.6)
+let padMassive = note("<[c3,eb3,g3,c4] [c3,eb3,g3,c4] [ab2,c3,eb3,ab3] [bb2,d3,f3,bb3]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).lpf(sine.range(1000,4000).slow(16)).attack(0.3).release(1.5).gain(0.4).room(0.6)
 
 // === LEAD - that haunting melody ===
 let lead = n("<[~ 7 ~ 5] [3 ~ 0 ~] [~ 7 ~ 10] [8 ~ 7 ~]>").scale("C4:minor").s("sawtooth").lpf(2000).gain(0.4).room(0.6).delay(0.3).delayfeedback(0.45).vib(5).vibmod(0.2)

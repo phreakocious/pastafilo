@@ -1,6 +1,6 @@
 ---
 name: boiler-room
-description: UK garage euphoria. Chopped vocals, supersaw stabs, strangers becoming family on the dancefloor.
+description: UK garage euphoria. Chopped vocals, detuned-saw stabs, strangers becoming family on the dancefloor.
 tempo: 0.52 cps (~125 BPM)
 key: G major
 duration: ~4 minutes
@@ -33,10 +33,10 @@ let garage = stack(kick, snare, hat)
 let fullKit = stack(kick, snare, hat, oh, perc, rim)
 let maxKit = stack(kick, snare, hat, oh, perc, rim, shaker)
 
-// === SUPERSAWS - pure euphoria ===
-let stab = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("supersaw").gain(0.42).struct("~ x ~ ~ ~ x ~ x").room(0.4).lpf(3200)
-let stabBig = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("supersaw").gain(0.58).room(0.5).lpf(5000)
-let stabMassive = note("<[g3,b3,d4,g4] [g3,b3,d4,g4] [c4,e4,g4,c5] [d4,a4,d5]>").s("supersaw").gain(0.62).room(0.55).lpf(6000)
+// === DETUNED SAWS - pure euphoria ===
+let stab = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.42).struct("~ x ~ ~ ~ x ~ x").room(0.4).lpf(3200)
+let stabBig = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.58).room(0.5).lpf(5000)
+let stabMassive = note("<[g3,b3,d4,g4] [g3,b3,d4,g4] [c4,e4,g4,c5] [d4,a4,d5]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.62).room(0.55).lpf(6000)
 let chords = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("gm_pad_warm").gain(0.28).room(0.6).attack(0.2).release(1.2)
 
 // === ARPS - hypnotic and rolling ===

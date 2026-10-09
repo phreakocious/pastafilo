@@ -219,10 +219,10 @@ See the frequencies - **bass on the left, treble on the right.**
 
 ```javascript
 // Basic
-s("supersaw")._spectrum()
+s("sawtooth")._spectrum()
 
 // Styled
-s("supersaw")._spectrum({
+s("sawtooth")._spectrum({
   thickness: 3,
   speed: 2,           // Scroll speed
   min: -60,           // Min dB
@@ -265,7 +265,7 @@ $: n("0 3 7 10".fast(2)).scale("C:minor").s("square")
   ._spiral({ logSpiral: 1, steady: 0.96 })
 
 // Pad with spectrum
-$: chord("<Cm7 Fm7>").voicing().s("supersaw")
+$: chord("<Cm7 Fm7>").voicing().s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12)))
   ._spectrum({ thickness: 2 })
 ```
 

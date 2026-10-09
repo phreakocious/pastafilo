@@ -37,12 +37,17 @@ export function useAudioRecorder(_getEditor: () => any) {
   const sampleRateRef = useRef<number>(44100)
   const destinationGainRef = useRef<GainNode | null>(null)
   const recordedUrlRef = useRef<string | null>(null)
+  // Guards read refs, not state: a timer or event listener holds an old closure
+  // whose state.isRecording is stale, and the call would silently do nothing.
+  const isRecordingRef = useRef(false)
+  const autoStopRef = useRef<NodeJS.Timeout | null>(null)
+  const uploadOnStopRef = useRef(false)
 
   /**
    * Start recording.
    */
-  const startRecording = useCallback(async () => {
-    if (state.isRecording) return
+  const startRecording = useCallback(async (): Promise<boolean> => {
+    if (isRecordingRef.current) return false
 
     // Dismiss any previous recording using ref (avoids stale closure)
     if (recordedUrlRef.current) {
@@ -56,13 +61,13 @@ export function useAudioRecorder(_getEditor: () => any) {
     const getAudioContextFn = (window as any).getAudioContext
     if (typeof getAudioContextFn !== 'function') {
       setState(prev => ({ ...prev, error: 'Start playback first' }))
-      return
+      return false
     }
 
     const audioContext = getAudioContextFn() as AudioContext
     if (!audioContext) {
       setState(prev => ({ ...prev, error: 'No audio context' }))
-      return
+      return false
     }
 
     sampleRateRef.current = audioContext.sampleRate
@@ -71,13 +76,13 @@ export function useAudioRecorder(_getEditor: () => any) {
     const getController = (window as any).getSuperdoughAudioController
     if (typeof getController !== 'function') {
       setState(prev => ({ ...prev, error: 'Audio controller not found' }))
-      return
+      return false
     }
 
     const controller = getController()
     if (!controller?.output?.destinationGain) {
       setState(prev => ({ ...prev, error: 'destinationGain not found' }))
-      return
+      return false
     }
 
     const destinationGain = controller.output.destinationGain as GainNode
@@ -109,10 +114,11 @@ export function useAudioRecorder(_getEditor: () => any) {
     } catch (e) {
       console.error('Failed to connect recording chain:', e)
       setState(prev => ({ ...prev, error: 'Failed to connect' }))
-      return
+      return false
     }
 
     processorRef.current = processor
+    isRecordingRef.current = true
 
     // Start timer
     setState({ isRecording: true, duration: 0, error: null, recordedBlob: null, recordedUrl: null })
@@ -125,13 +131,21 @@ export function useAudioRecorder(_getEditor: () => any) {
     }, 500)
 
     console.log('Recording started')
-  }, [state.isRecording])
+    return true
+  }, [])
 
   /**
    * Stop recording and download WAV.
    */
   const stopRecording = useCallback(() => {
-    if (!state.isRecording) return
+    if (!isRecordingRef.current) return
+    isRecordingRef.current = false
+    if (autoStopRef.current) {
+      clearTimeout(autoStopRef.current)
+      autoStopRef.current = null
+    }
+    const upload = uploadOnStopRef.current
+    uploadOnStopRef.current = false
 
     // Stop timer
     if (timerRef.current) {
@@ -179,18 +193,46 @@ export function useAudioRecorder(_getEditor: () => any) {
       const url = URL.createObjectURL(wavBlob)
       recordedUrlRef.current = url // Track URL in ref for cleanup
       console.log(`Recording ready: ${(wavBlob.size / 1024).toFixed(1)} KB`)
+      if (upload) {
+        fetch('/api/recording', { method: 'POST', body: wavBlob })
+          .then(async r => {
+            const body = await r.json()
+            if (r.ok) console.log('Recording uploaded:', body)
+            else console.error(`Recording upload failed (${r.status}):`, body)
+          })
+          .catch(e => console.error('Recording upload failed:', e))
+      }
 
       // Reset recording state but keep the blob for preview
       chunksRef.current = [[], []]
       destinationGainRef.current = null
       setState({ isRecording: false, duration: 0, error: null, recordedBlob: wavBlob, recordedUrl: url })
     } else {
+      if (upload) console.error('Recorded 0 samples: audio is suspended until the page gets a click')
       recordedUrlRef.current = null
       chunksRef.current = [[], []]
       destinationGainRef.current = null
       setState({ isRecording: false, duration: 0, error: null, recordedBlob: null, recordedUrl: null })
     }
-  }, [state.isRecording])
+  }, [])
+
+  /**
+   * Remote recording: POST /api/record {seconds} reaches here via use-strudel's
+   * 'strudel:record' event. Record that long, then upload to /api/recording.
+   */
+  useEffect(() => {
+    const onRecord = async (e: Event) => {
+      const { seconds } = (e as CustomEvent<{ seconds: number }>).detail
+      if (!(await startRecording())) {
+        console.error('Remote record: could not start (already recording, or no audio yet)')
+        return
+      }
+      uploadOnStopRef.current = true
+      autoStopRef.current = setTimeout(stopRecording, seconds * 1000)
+    }
+    window.addEventListener('strudel:record', onRecord)
+    return () => window.removeEventListener('strudel:record', onRecord)
+  }, [startRecording, stopRecording])
 
   /**
    * Download the recorded audio.
@@ -217,6 +259,7 @@ export function useAudioRecorder(_getEditor: () => any) {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
+      if (autoStopRef.current) clearTimeout(autoStopRef.current)
       if (processorRef.current) {
         try { processorRef.current.disconnect() } catch {}
       }

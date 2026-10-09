@@ -191,7 +191,7 @@ s("rm50_bd:50 rm50_sd:30 rm50_perc:20")
 | `triangle` | `tri` | Soft, flute-like |
 | `sawtooth` | `saw` | Bright, buzzy - classic synth |
 | `square` | `sqr` | Hollow, clarinet-like |
-| `supersaw` | - | Detuned saws - huge pads |
+| ~~`supersaw`~~ | - | **Broken here**: measured silent after its first note in @strudel/repl 1.3.0 (2026-09-24). Use 3 detuned saws: `s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12)))`, gain ~30% lower |
 | `pulse` | - | Variable width square |
 
 **Noise Sources:**
@@ -779,12 +779,12 @@ arrange(
 
 | Genre | Drums | Bass | Keys/Pads | Lead/Melody |
 |-------|-------|------|-----------|-------------|
-| **House** | tr909 | `sawtooth` | `gm_pad_warm`, `gm_epiano1` | `supersaw` |
+| **House** | tr909 | `sawtooth` | `gm_pad_warm`, `gm_epiano1` | detuned saws (see Synthesizers) |
 | **Techno** | tr808, tr909 | `sawtooth`, `square` | `gm_pad_metallic` | `gm_lead_2_sawtooth` |
 | **Jazz** | tr707 (brushes) | `gm_acoustic_bass` | `gm_epiano1`, `piano` | `gm_tenor_sax`, `gm_trumpet` |
 | **Ambient** | minimal/none | `gm_contrabass` | `gm_pad_warm`, `gm_pad_halo` | `kalimba`, `gm_flute` |
 | **Metal** | tr909 (fast) | `gm_distortion_guitar` | `gm_overdriven_guitar` | `gm_guitar_harmonics` |
-| **Synthwave** | tr808 | `sawtooth`, `gm_synth_bass_1` | `gm_pad_warm` | `supersaw`, `gm_lead_2_sawtooth` |
+| **Synthwave** | tr808 | `sawtooth`, `gm_synth_bass_1` | `gm_pad_warm` | detuned saws, `gm_lead_2_sawtooth` |
 | **Lo-fi** | vinyl drums | `gm_acoustic_bass` | `gm_epiano1`, `piano` | `gm_vibraphone`, `kalimba` |
 | **Orchestral** | `gm_timpani` | `gm_contrabass`, `gm_bassoon` | `gm_string_ensemble_1` | `gm_violin`, `gm_flute`, `gm_french_horn` |
 | **Latin** | congas, bongos | `gm_acoustic_bass` | `piano` | `gm_trumpet`, `gm_alto_sax` |

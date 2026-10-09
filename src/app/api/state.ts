@@ -15,6 +15,7 @@ export type AppState = {
 }
 
 type Listener = (state: AppState) => void
+type CommandListener = (name: string, data: unknown) => void
 
 /**
  * Simple event emitter for broadcasting state changes.
@@ -57,6 +58,27 @@ class StateEmitter {
   private emit(): void {
     this.listeners.forEach(listener => listener(this._state))
   }
+
+  private commandListeners: Set<CommandListener> = new Set()
+
+  /**
+   * One-shot command to connected pages (e.g. record). Not stored in state,
+   * so a page that connects later never replays it. Returns the receiver count.
+   */
+  command(name: string, data: unknown): number {
+    this.commandListeners.forEach(listener => listener(name, data))
+    return this.commandListeners.size
+  }
+
+  subscribeCommands(listener: CommandListener): () => void {
+    this.commandListeners.add(listener)
+    return () => this.commandListeners.delete(listener)
+  }
 }
 
-export const state = new StateEmitter()
+// Route handlers can each load their own copy of this module (seen in Next dev
+// after an HMR update), and a module-level singleton then splits: /api/code
+// accepts a push that /api/events never sees. Keep one instance per process.
+// ponytail: edits to StateEmitter need a server restart to reach the live instance.
+const globalForState = globalThis as unknown as { strudelState?: StateEmitter }
+export const state = (globalForState.strudelState ??= new StateEmitter())

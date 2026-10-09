@@ -22,8 +22,12 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 
-/** CDN URL for the Strudel REPL web component */
-const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@latest'
+/**
+ * CDN URL for the Strudel REPL web component. Pinned: @latest changes the
+ * sound under us without notice. In 1.3.0 `supersaw` goes silent after its
+ * first note; re-test it before bumping.
+ */
+const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@1.3.0'
 
 type ServerState = {
   code: string
@@ -53,6 +57,20 @@ export function useStrudel() {
     script.src = STRUDEL_CDN
     script.onload = () => setLoaded(true)
     document.head.appendChild(script)
+  }, [])
+
+  /**
+   * Browsers start audio suspended until a user gesture, and API-triggered
+   * play is not one. Resume Strudel's AudioContext on any click or key press.
+   */
+  useEffect(() => {
+    const unlock = () => (window as any).getAudioContext?.().resume()
+    document.addEventListener('pointerdown', unlock)
+    document.addEventListener('keydown', unlock)
+    return () => {
+      document.removeEventListener('pointerdown', unlock)
+      document.removeEventListener('keydown', unlock)
+    }
   }, [])
 
   /**
@@ -106,13 +124,30 @@ export function useStrudel() {
   useEffect(() => {
     if (!loaded) return
 
-    const eventSource = new EventSource('/api/events')
+    let eventSource: EventSource | null = null
+    let timer: ReturnType<typeof setTimeout> | undefined
 
-    eventSource.onmessage = (event) => {
+    // The web component creates its editor after upgrade. A message handled
+    // before then would be recorded as applied but dropped, so connect only
+    // once the editor exists. ponytail: 100ms poll, no readiness event known.
+    const connect = () => {
+      if (!getEditor()) {
+        timer = setTimeout(connect, 100)
+        return
+      }
+      eventSource = new EventSource('/api/events')
+      eventSource.onmessage = onMessage
+      // One-shot commands go out as DOM events; useAudioRecorder listens for 'strudel:record'
+      eventSource.addEventListener('record', (e) =>
+        window.dispatchEvent(new CustomEvent('strudel:record', { detail: JSON.parse((e as MessageEvent).data) })))
+    }
+
+    const onMessage = (event: MessageEvent) => {
       const newState: ServerState = JSON.parse(event.data)
       const lastState = lastServerStateRef.current
-      const codeChanged = lastState && newState.code !== lastState.code
-      const playStateChanged = lastState && newState.isPlaying !== lastState.isPlaying
+      // First message counts as a change, so a fresh page adopts the server's state
+      const codeChanged = !lastState || newState.code !== lastState.code
+      const playStateChanged = !lastState || newState.isPlaying !== lastState.isPlaying
 
       // Update code if changed
       if (codeChanged) {
@@ -134,16 +169,12 @@ export function useStrudel() {
       lastServerStateRef.current = newState
     }
 
-    eventSource.onerror = () => {
-      // Reconnect on error after a delay
-      eventSource.close()
-      setTimeout(() => {
-        // Effect will re-run and create new connection
-      }, 1000)
-    }
+    // No onerror handler: EventSource reconnects by itself unless closed.
+    connect()
 
     return () => {
-      eventSource.close()
+      clearTimeout(timer)
+      eventSource?.close()
     }
   }, [loaded, getEditor, play, stop])
 

@@ -9,8 +9,10 @@
  *   GET /api/events - Opens an SSE stream
  *
  * EVENTS:
- *   - state: Fired when code or isPlaying changes
+ *   - state (default message): Fired when code or isPlaying changes
  *     data: { code: string, isPlaying: boolean }
+ *   - record: One-shot command, never replayed on connect
+ *     data: { seconds: number }
  */
 
 import { state } from '../state'
@@ -19,32 +21,33 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const encoder = new TextEncoder()
-  let unsubscribe: (() => void) | null = null
+  let unsubscribe: (() => void)[] = []
   let isClosed = false
 
   const stream = new ReadableStream({
     start(controller) {
-      // Send initial state
-      const initial = `data: ${JSON.stringify(state.state)}\n\n`
-      controller.enqueue(encoder.encode(initial))
-
-      // Subscribe to state changes
-      unsubscribe = state.subscribe((newState) => {
+      const send = (chunk: string) => {
         if (isClosed) return
         try {
-          const message = `data: ${JSON.stringify(newState)}\n\n`
-          controller.enqueue(encoder.encode(message))
+          controller.enqueue(encoder.encode(chunk))
         } catch {
           // Controller closed, clean up
           isClosed = true
-          if (unsubscribe) unsubscribe()
+          unsubscribe.forEach(u => u())
         }
-      })
+      }
+
+      // Send initial state, then changes and commands
+      send(`data: ${JSON.stringify(state.state)}\n\n`)
+      unsubscribe = [
+        state.subscribe((newState) => send(`data: ${JSON.stringify(newState)}\n\n`)),
+        state.subscribeCommands((name, data) => send(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`)),
+      ]
     },
     cancel() {
       // Called when client disconnects
       isClosed = true
-      if (unsubscribe) unsubscribe()
+      unsubscribe.forEach(u => u())
     },
   })
 

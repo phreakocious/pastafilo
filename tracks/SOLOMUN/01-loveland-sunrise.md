@@ -28,7 +28,7 @@ let perc = s("~ ~ cb ~").bank("RolandTR909").gain(0.2).delay(0.3).delaytime(0.37
 
 // Emotional chords - make them cry
 let chords = chord("<Cm Cm Ab Bb>").voicing().s("gm_pad_warm").gain(0.3).attack(0.3).release(1.5).room(0.6).size(0.8).lpf(1200)
-let chordsBright = chord("<Cm Cm Ab Bb>").voicing().s("supersaw").gain(0.25).attack(0.1).release(0.8).room(0.5).lpf(sine.range(800, 3000).slow(16))
+let chordsBright = chord("<Cm Cm Ab Bb>").voicing().s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.25).attack(0.1).release(0.8).room(0.5).lpf(sine.range(800, 3000).slow(16))
 
 // The arpeggio - hypnotic and relentless
 let arp = n("0 4 7 11 14 11 7 4").scale("C3:minor").s("triangle").gain(0.35).lpf(sine.range(600, 2500).slow(8)).room(0.5).delay(0.25).delaytime(0.1875).delayfeedback(0.5)
@@ -36,7 +36,7 @@ let arpHigh = n("<0 3 7 10> <7 10 14 17>/2").scale("C4:minor").s("sine").gain(0.
 
 // The melody - sunrise through tears
 let melody = n("<[~ 7 ~ 4] [~ 11 ~ 7] [~ 14 11 ~] [10 ~ 7 ~]>").scale("C4:minor").s("gm_pad_choir").gain(0.25).attack(0.2).release(1).room(0.7).delay(0.2)
-let lead = n("<[14 ~ 11 ~] [~ 10 ~ 7] [11 ~ ~ 14] [~ 7 10 ~]>").scale("C4:minor").s("supersaw").gain(0.35).lpf(2000).room(0.5).attack(0.05).release(0.5).vib(4).vibmod(0.15)
+let lead = n("<[14 ~ 11 ~] [~ 10 ~ 7] [11 ~ ~ 14] [~ 7 10 ~]>").scale("C4:minor").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.35).lpf(2000).room(0.5).attack(0.05).release(0.5).vib(4).vibmod(0.15)
 
 // Atmosphere - we are floating
 let pad = chord("<Cm7 Abmaj7>").voicing().s("gm_pad_sweep").gain(0.15).attack(2).release(4).room(0.9).size(0.95).lpf(800)
