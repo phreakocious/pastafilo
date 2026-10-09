@@ -191,7 +191,7 @@ s("rm50_bd:50 rm50_sd:30 rm50_perc:20")
 | `triangle` | `tri` | Soft, flute-like |
 | `sawtooth` | `saw` | Bright, buzzy - classic synth |
 | `square` | `sqr` | Hollow, clarinet-like |
-| ~~`supersaw`~~ | - | **Broken here**: measured silent after its first note in @strudel/repl 1.3.0 (2026-09-24). Use 3 detuned saws: `s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12)))`, gain ~30% lower |
+| ~~`supersaw`~~ | - | **Broken here**: measured silent after its first note in @strudel/repl 1.3.0. Use 3 detuned saws: `s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12)))`, gain ~30% lower |
 | `pulse` | - | Variable width square |
 
 **Noise Sources:**

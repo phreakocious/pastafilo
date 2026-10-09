@@ -14,7 +14,7 @@ Create evolving musical journeys that run autonomously.
 
 **CRITICAL**: NEVER play music before asking the user what they want. Always ask first, then play.
 
-**Use the `AskUserQuestion` tool** IMMEDIATELY to learn about the set they want.
+**Ask with options** IMMEDIATELY to learn about the set they want.
 
 Ask about:
 - **Genre/vibe** - What world are we in?
@@ -113,7 +113,7 @@ Pick what fits the mood. Surprise yourself.
 
 ## Execution Pattern
 
-**CRITICAL**: Each command MUST be a SEPARATE Bash tool call. DO NOT chain commands with `&&`, `&`, or `;`. The allowlist only permits individual commands.
+**CRITICAL**: Each command MUST be a SEPARATE shell call. DO NOT chain commands with `&&`, `&`, or `;`. The allowlist only permits individual commands.
 
 Each phase follows this structure:
 
@@ -121,12 +121,12 @@ Each phase follows this structure:
 ```bash
 sleep <seconds>
 ```
-Run as a separate Bash call (15-40 seconds typical).
+Run as a separate shell call (15-40 seconds typical).
 
 **Step 2 & 3: Announce + Update code (PARALLEL)**
 
-Run these two Bash calls in the SAME message (parallel execution):
-- `say "<announcement>"` with `run_in_background: true`
+Run these two shell calls in the SAME message (parallel execution):
+- `say "<announcement>"` in the background
 - `curl -X POST http://localhost:3000/api/code ...`
 
 This way voice plays while code updates simultaneously.
@@ -139,8 +139,8 @@ Run after the code curl completes.
 
 **Key rules:**
 - NEVER use `&&`, `&`, or `;` to chain commands
-- `sleep` - separate Bash call
-- `say` - use `run_in_background: true` parameter, run PARALLEL with code
+- `sleep` - separate shell call
+- `say` - run in the background, PARALLEL with code
 - `curl /api/code` - run PARALLEL with say
 - `curl /api/play` - run AFTER code completes (separate call)
 

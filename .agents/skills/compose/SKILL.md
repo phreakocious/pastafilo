@@ -7,7 +7,7 @@ requires: strudel
 
 # Compose - Full Track Compositions
 
-**Requires:** `/strudel` skill for syntax (notes, sounds, effects, patterns)
+**Requires:** the `strudel` skill for syntax (notes, sounds, effects, patterns)
 
 Use `arrange()` to create complete tracks with intro, build, drop, breakdown, outro.
 
@@ -335,7 +335,7 @@ let garage = stack(kick, snare, hat)
 let fullKit = stack(kick, snare, hat, oh, perc, rim)
 let maxKit = stack(kick, snare, hat, oh, perc, rim, shaker)
 
-// === SUPERSAWS ===
+// === DETUNED SAWS ===
 let stab = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.42).struct("~ x ~ ~ ~ x ~ x").room(0.4).lpf(3200)
 let stabBig = note("<[g3,b3,d4] [g3,b3,d4] [c4,e4,g4] [d4,a4]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.58).room(0.5).lpf(5000)
 let stabMassive = note("<[g3,b3,d4,g4] [g3,b3,d4,g4] [c4,e4,g4,c5] [d4,a4,d5]>").s("sawtooth").layer(x => x, x => x.add(note(.12)), x => x.add(note(-.12))).gain(0.62).room(0.55).lpf(6000)

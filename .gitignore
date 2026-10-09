@@ -43,3 +43,7 @@ references/
 .venv/
 output/
 __pycache__/
+
+# local agent settings
+CLAUDE.local.md
+.claude/settings.local.json
